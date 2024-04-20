@@ -1,0 +1,60 @@
+version: '3.5'
+name: "ioz_laravel"
+services:
+  ioz_mysql:
+    container_name: ioz_mysql
+    image: mysql:8.3
+    environment:
+      MYSQL_ROOT_USER: root
+      MYSQL_ROOT_PASSWORD: PwDev123
+      MYSQL_DATABASE: ioz_laravel
+    volumes:
+       - ioz_volume:/var/lib/mysql
+    ports:
+      - "49010:3306"
+    networks:
+      ioz_network:
+        ipv4_address: 10.10.10.2
+    restart: unless-stopped
+
+  ioz_php:
+    build:
+      context: '.'
+      dockerfile: .docker/php/Dockerfile
+    image: ioz/php:8.2
+    container_name: ioz_php
+    ports:
+      - 49011:80
+    environment:
+      - APACHE_RUN_USER=#1000
+      - APACHE_RUN_GROUP=#1000
+    volumes:
+      - .:/var/www/html
+    networks:
+      ioz_network:
+        ipv4_address: 10.10.10.3
+    restart: unless-stopped
+
+  ioz_redis:
+    image: redis:latest
+    container_name: ioz_redis
+    ports:
+      - "49012:6379"
+    volumes:
+      - 'ioz_volume:/data'
+    networks:
+      ioz_network:
+        ipv4_address: 10.10.10.4
+
+networks:
+  ioz_network:
+    name: ioz_network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.10.0/24
+          gateway: 10.10.10.1
+
+volumes:
+  ioz_volume:
+    name: ioz_volume
